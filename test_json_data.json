@@ -1,0 +1,25 @@
+{
+    "groups": [
+        {
+            "A_group": {
+                "person": "John Doe",
+                "number": 1234567890,
+                "email": "john.doe@example.com"
+            }
+        },
+        {
+            "B_group": {
+                "person": "Jane Smith",
+                "number": 9876543210,
+                "email": "jane.smith@example.com"
+            }
+        },
+        {
+            "C_group": {
+                "person": "Michael Johnson",
+                "number": 5551234567,
+                "email": "michael.johnson@example.com"
+            }
+        }
+    ]
+}
