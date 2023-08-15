@@ -1,35 +1,20 @@
-use mongodb::{
-    bson::{doc, Document},
-    options::ClientOptions,
-    options::CreateCollectionOptions,
-    Client,
-};
-use serde::Deserialize;
+use bson::to_document;
+use mongodb::{bson::doc, options::ClientOptions, options::CreateCollectionOptions, Client};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TestMongoData {
+    id_: i32,
+    title: String,
+    author: String,
+    age: i32,
+}
 
 pub struct MongoWrapper {
     client: Client,
     database_name: String,
     collection_name: String,
 }
-
-//testing structs - Redo this on your own
-#[derive(Deserialize)]
-pub struct Group {
-    #[serde(rename = "A_group")]
-    pub a_group: BGroup,
-    #[serde(rename = "B_group")]
-    pub b_group: BGroup,
-    #[serde(rename = "C_group")]
-    pub c_group: BGroup,
-}
-
-#[derive(Deserialize)]
-pub struct BGroup {
-    pub person: String,
-    pub number: i64,
-    pub email: String,
-}
-//testing structs - Redo this on your own
 
 impl MongoWrapper {
     pub async fn create_mongo_connection() -> Result<Self, Box<dyn std::error::Error>> {
@@ -139,18 +124,53 @@ impl MongoWrapper {
     }
 
     // Redo this with your own understanding and style.
-    pub async fn insert_json_data(
+    pub fn convert_vector_data_to_bson(&self) -> Vec<bson::Document> {
+        let books: Vec<TestMongoData> = vec![
+            TestMongoData {
+                id_: 4,
+                title: "Kurec4".to_string(),
+                author: "Pesho".to_string(),
+                age: 31,
+            },
+            TestMongoData {
+                id_: 5,
+                title: "Kurec5".to_string(),
+                author: "Pesho".to_string(),
+                age: 33,
+            },
+            TestMongoData {
+                id_: 6,
+                title: "Kurec6".to_string(),
+                author: "Pesho".to_string(),
+                age: 35,
+            },
+        ];
+        let mut bson_documents: Vec<_> = Vec::new();
+        for book in &books {
+            if let Ok(document) = to_document(book) {
+                bson_documents.push(document);
+            } else {
+                println!("Failed to convert book data to BSON document");
+            }
+        }
+        return bson_documents;
+    }
+
+    pub async fn insert_data(
         &self,
-        data: Vec<Document>,
+        data: Vec<bson::Document>,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let collection = self
+        let collection_handle = self
             .client
             .database(&self.database_name)
             .collection(&self.collection_name);
 
-        collection.insert_many(data, None).await?;
+        collection_handle.insert_many(data, None).await?;
 
         Ok(())
     }
+
+    //TODO: Create a function that updates an existing collection
+
     // Redo this with your own understanding and style.
 }

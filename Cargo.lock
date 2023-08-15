@@ -705,6 +705,7 @@ dependencies = [
  "bson 1.2.4",
  "mongodb",
  "serde",
+ "serde_derive",
  "serde_json",
  "tokio",
 ]
