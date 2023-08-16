@@ -173,4 +173,5 @@ impl MongoWrapper {
     // TODO 1: Make the serach function more flexible, taking arguments or something of the sort.
     // TODO 2: Create a delete function following the structure of the search one.
     // TODO 3: Create an Update function using the logic of the delete and search functions.
+    // helper: https://taharmeijs.medium.com/beginners-guide-to-mongodb-and-rust-8d8d3ef17920 & of course ChatGPT
 }
