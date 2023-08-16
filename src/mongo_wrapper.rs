@@ -1,14 +1,8 @@
-use bson::to_document;
-use mongodb::{bson::doc, options::ClientOptions, options::CreateCollectionOptions, Client};
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Serialize, Deserialize)]
-struct TestMongoData {
-    id_: i32,
-    title: String,
-    author: String,
-    age: i32,
-}
+use bson::Document;
+use mongodb::{
+    bson::doc, options::ClientOptions, options::CreateCollectionOptions, options::FindOneOptions,
+    Client, Collection,
+};
 
 pub struct MongoWrapper {
     client: Client,
@@ -123,40 +117,7 @@ impl MongoWrapper {
         Ok(collections)
     }
 
-    // Redo this with your own understanding and style.
-    pub fn convert_vector_data_to_bson(&self) -> Vec<bson::Document> {
-        let books: Vec<TestMongoData> = vec![
-            TestMongoData {
-                id_: 4,
-                title: "Kurec4".to_string(),
-                author: "Pesho".to_string(),
-                age: 31,
-            },
-            TestMongoData {
-                id_: 5,
-                title: "Kurec5".to_string(),
-                author: "Pesho".to_string(),
-                age: 33,
-            },
-            TestMongoData {
-                id_: 6,
-                title: "Kurec6".to_string(),
-                author: "Pesho".to_string(),
-                age: 35,
-            },
-        ];
-        let mut bson_documents: Vec<_> = Vec::new();
-        for book in &books {
-            if let Ok(document) = to_document(book) {
-                bson_documents.push(document);
-            } else {
-                println!("Failed to convert book data to BSON document");
-            }
-        }
-        return bson_documents;
-    }
-
-    pub async fn insert_data(
+    pub async fn insert_multiple_documents(
         &self,
         data: Vec<bson::Document>,
     ) -> Result<(), Box<dyn std::error::Error>> {
@@ -170,7 +131,46 @@ impl MongoWrapper {
         Ok(())
     }
 
-    //TODO: Create a function that updates an existing collection
+    // we can change that here so that we pass the data s a parameter and call the function in the main.rs file..
+    pub async fn insert_single_document(
+        &self,
+        data: Document,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        // let bson_doc = self.convert_struct_data_to_single_bson()?;
+        let collection_handle = self
+            .client
+            .database(&self.database_name)
+            .collection(&self.collection_name);
 
-    // Redo this with your own understanding and style.
+        collection_handle.insert_one(data, None).await?;
+
+        Ok(())
+    }
+
+    pub async fn search_for_single_document(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let collection_handle: Collection<Document> = self
+            .client
+            .database(&self.database_name)
+            .collection(&self.collection_name);
+
+        let find_options = FindOneOptions::default();
+        if let Some(document) = collection_handle
+            .find_one(doc! { "age": 31 }, find_options)
+            .await?
+        {
+            let age = document.get_i32("age")?;
+            let title = document.get_str("title")?;
+            // Extract other fields as needed
+
+            println!("Found document: age={}, title={}", age, title);
+        } else {
+            println!("There is no matching document");
+        }
+
+        Ok(())
+    }
+
+    // TODO 1: Make the serach function more flexible, taking arguments or something of the sort.
+    // TODO 2: Create a delete function following the structure of the search one.
+    // TODO 3: Create an Update function using the logic of the delete and search functions.
 }
