@@ -92,7 +92,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     .insert_single_document(convert_struct_data_to_single_bson().unwrap())
     //     .await?; // - insert a single document
 
-    // mongo_client.search_for_single_document().await?; // find a single document using search parameters
+    // mongo_client.search_for_single_document("age", 33).await?; // find a single document using search parameters
+    // mongo_client.delete_single_document("age", 33).await?; // delete a single document using search parameters
+    // mongo_client
+    //     .update_single_document("age", 33, "age", 40)
+    //     .await?; // update a single document using search parameters
 
     // Redo this with your own understanding and style.
 

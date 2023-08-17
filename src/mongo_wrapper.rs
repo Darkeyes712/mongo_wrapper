@@ -3,6 +3,7 @@ use mongodb::{
     bson::doc, options::ClientOptions, options::CreateCollectionOptions, options::FindOneOptions,
     Client, Collection,
 };
+use std::error::Error;
 
 pub struct MongoWrapper {
     client: Client,
@@ -147,7 +148,11 @@ impl MongoWrapper {
         Ok(())
     }
 
-    pub async fn search_for_single_document(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn search_for_single_document(
+        &self,
+        key: &str,
+        value: i32,
+    ) -> Result<Document, Box<dyn Error>> {
         let collection_handle: Collection<Document> = self
             .client
             .database(&self.database_name)
@@ -155,23 +160,64 @@ impl MongoWrapper {
 
         let find_options = FindOneOptions::default();
         if let Some(document) = collection_handle
-            .find_one(doc! { "age": 31 }, find_options)
+            .find_one(doc! { key: value }, find_options)
             .await?
         {
-            let age = document.get_i32("age")?;
-            let title = document.get_str("title")?;
-            // Extract other fields as needed
-
-            println!("Found document: age={}, title={}", age, title);
+            println!("Found document: {:?}", document); // Print the document
+            Ok(document)
         } else {
-            println!("There is no matching document");
+            Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "No matching document found",
+            )))
+        }
+    }
+
+    pub async fn delete_single_document(
+        &self,
+        key: &str,
+        value: i32,
+    ) -> Result<(), Box<dyn Error>> {
+        let collection_handle: Collection<Document> = self
+            .client
+            .database(&self.database_name)
+            .collection(&self.collection_name);
+
+        if let Ok(document_to_delete) = self.search_for_single_document(key, value).await {
+            let filter = doc! { key: value };
+            collection_handle.delete_one(filter, None).await?;
+            println!("Deleted document: {:?}", document_to_delete);
+        } else {
+            println!("No document found matching that criteria.");
         }
 
         Ok(())
     }
 
-    // TODO 1: Make the serach function more flexible, taking arguments or something of the sort.
-    // TODO 2: Create a delete function following the structure of the search one.
-    // TODO 3: Create an Update function using the logic of the delete and search functions.
-    // helper: https://taharmeijs.medium.com/beginners-guide-to-mongodb-and-rust-8d8d3ef17920 & of course ChatGPT
+    pub async fn update_single_document(
+        &self,
+        key: &str,
+        value: i32,
+        new_key: &str,
+        new_value: i32,
+    ) -> Result<(), Box<dyn Error>> {
+        let collection_handle: Collection<Document> = self
+            .client
+            .database(&self.database_name)
+            .collection(&self.collection_name);
+
+        if let Ok(document_to_update) = self.search_for_single_document(key, value).await {
+            let filter = doc! { key: value };
+            let update_value = doc! {"$set": {new_key: new_value}};
+
+            collection_handle
+                .update_one(filter, update_value, None)
+                .await?;
+            println!("Updated document: {:?}", document_to_update);
+        } else {
+            println!("No document found matching that criteria.");
+        }
+
+        Ok(())
+    }
 }
